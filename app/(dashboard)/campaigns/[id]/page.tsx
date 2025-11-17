@@ -113,11 +113,11 @@ export default async function CampaignDetailPage({
 
   // Merge and sort recent activity
   const recentActivity = [
-    ...(recentClicks?.map(c => ({ type: 'click', ...c })) || []),
-    ...(recentConversions?.map(c => ({ type: 'conversion', ...c })) || [])
+    ...(recentClicks?.map(c => ({ type: 'click' as const, ...c })) || []),
+    ...(recentConversions?.map(c => ({ type: 'conversion' as const, ...c })) || [])
   ].sort((a, b) => {
-    const dateA = new Date(a.clicked_at || a.converted_at)
-    const dateB = new Date(b.clicked_at || b.converted_at)
+    const dateA = new Date((a as any).clicked_at || (a as any).converted_at)
+    const dateB = new Date((b as any).clicked_at || (b as any).converted_at)
     return dateB.getTime() - dateA.getTime()
   }).slice(0, 10)
 
