@@ -1,0 +1,79 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+
+    // Check auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const {
+      name,
+      event_date,
+      promotion_end_date,
+      creative_image_url,
+      destination_url,
+      email_subject,
+      email_template
+    } = body
+
+    // Create campaign
+    const { data: campaign, error } = await supabase
+      .from('campaigns')
+      .insert({
+        organizer_id: user.id,
+        name,
+        event_date,
+        promotion_end_date,
+        creative_image_url,
+        destination_url,
+        email_subject,
+        email_template,
+        status: 'draft'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json(campaign)
+  } catch (error) {
+    console.error('Campaign creation error:', error)
+    return NextResponse.json(
+      { error: 'Failed to create campaign' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: campaigns, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('organizer_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json(campaigns)
+  } catch (error) {
+    console.error('Fetch campaigns error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch campaigns' },
+      { status: 500 }
+    )
+  }
+}
