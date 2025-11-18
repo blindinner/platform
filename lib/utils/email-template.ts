@@ -29,8 +29,7 @@ export function renderEmailTemplate(
 
 export function buildEmailHtml(
   body: string,
-  creativeUrl: string,
-  uniqueLink: string,
+  sharePageUrl: string,
   campaignName: string
 ): string {
   return `
@@ -45,50 +44,41 @@ export function buildEmailHtml(
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
 
     <!-- Header -->
-    <div style="background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px;">${campaignName}</h1>
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
+      <h1 style="margin: 0; font-size: 28px; font-weight: bold;">${campaignName}</h1>
     </div>
 
     <!-- Body -->
-    <div style="padding: 30px 20px;">
-      <div style="white-space: pre-wrap; line-height: 1.6; color: #333333;">
+    <div style="padding: 40px 30px;">
+      <div style="white-space: pre-wrap; line-height: 1.8; color: #333333; font-size: 16px;">
         ${body.replace(/\n/g, '<br>')}
       </div>
     </div>
 
-    <!-- Creative Preview -->
-    <div style="padding: 20px; text-align: center; background-color: #f9f9f9;">
-      <h3 style="margin: 0 0 15px 0; color: #333333;">Your Shareable Creative</h3>
-      <img src="${creativeUrl}"
-           style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px;"
-           alt="Shareable creative" />
-      <a href="${creativeUrl}"
-         style="display: inline-block; background-color: #007bff; color: #ffffff;
-                padding: 12px 30px; text-decoration: none; border-radius: 4px;
-                font-weight: bold;">
-        Download Creative
-      </a>
-    </div>
-
-    <!-- Unique Link -->
-    <div style="padding: 30px 20px; background-color: #f0f8ff;">
-      <p style="margin: 0 0 15px 0; font-weight: bold; text-align: center; color: #333333;">
-        Your Unique Referral Link:
+    <!-- Main CTA -->
+    <div style="padding: 40px 30px; text-align: center; background: linear-gradient(to bottom, #ffffff 0%, #f9f9f9 100%);">
+      <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 22px;">Share This Event!</h2>
+      <p style="margin: 0 0 30px 0; color: #666666; font-size: 14px;">
+        Get your exclusive shareable creative and referral link
       </p>
-      <div style="background-color: #ffffff; padding: 15px; border-radius: 4px;
-                  text-align: center; border: 2px dashed #007bff;">
-        <code style="font-size: 14px; color: #007bff; word-break: break-all;">
-          ${uniqueLink}
-        </code>
-      </div>
-      <p style="margin: 15px 0 0 0; text-align: center; font-size: 12px; color: #666666;">
-        Copy this link and share it on your social media
+
+      <!-- Big Share Button -->
+      <a href="${sharePageUrl}"
+         style="display: inline-block; background: linear-gradient(135deg, #E1306C 0%, #C13584 50%, #833AB4 100%);
+                color: #ffffff; padding: 18px 50px; text-decoration: none; border-radius: 30px;
+                font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(225, 48, 108, 0.4);">
+        📸 Share to Instagram Story
+      </a>
+
+      <p style="margin: 20px 0 0 0; color: #999999; font-size: 13px;">
+        Tap to get your creative and unique link
       </p>
     </div>
 
     <!-- Footer -->
     <div style="padding: 30px 20px; text-align: center; color: #666666; font-size: 12px;
-                background-color: #f5f5f5;">
+                background-color: #f5f5f5; border-top: 1px solid #e0e0e0;">
+      <p style="margin: 0 0 10px 0;">Share with friends and earn rewards!</p>
       <p style="margin: 0;">Questions? Just reply to this email.</p>
     </div>
 

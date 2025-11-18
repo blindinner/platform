@@ -65,10 +65,12 @@ export async function POST(
           event: campaign.name
         })
 
+        // Build share page URL
+        const sharePageUrl = `${process.env.NEXT_PUBLIC_APP_URL}/share/${uniqueCode}`
+
         const emailHtml = buildEmailHtml(
           emailBody,
-          campaign.creative_image_url,
-          shortLink,
+          sharePageUrl,
           campaign.name
         )
 
