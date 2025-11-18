@@ -74,6 +74,12 @@ export async function POST(
           campaign.name
         )
 
+        // Debug logging
+        console.log('📧 Sending email to:', contact.email)
+        console.log('📧 Subject:', campaign.email_subject)
+        console.log('📧 Share URL:', sharePageUrl)
+        console.log('📧 Email HTML length:', emailHtml.length)
+
         // Send email via Resend
         const { data: emailData, error: emailError } = await resend.emails.send({
           from: 'Referral Platform <onboarding@resend.dev>',
@@ -81,6 +87,8 @@ export async function POST(
           subject: campaign.email_subject,
           html: emailHtml
         })
+
+        console.log('📧 Resend response:', { data: emailData, error: emailError })
 
         if (emailError) throw emailError
 
