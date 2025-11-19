@@ -82,7 +82,7 @@ export async function POST(
 
         // Send email via Resend
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: 'Referral Platform <onboarding@resend.dev>',
+          from: process.env.FROM_EMAIL || 'Referral Platform <onboarding@resend.dev>',
           to: contact.email,
           subject: campaign.email_subject,
           html: emailHtml

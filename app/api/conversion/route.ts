@@ -158,7 +158,7 @@ async function sendConversionNotification(
     `
 
     await resend.emails.send({
-      from: 'Referral Platform <onboarding@resend.dev>',
+      from: process.env.FROM_EMAIL || 'Referral Platform <onboarding@resend.dev>',
       to: contact.email,
       subject: '🎉 Someone bought a ticket through your link!',
       html: emailHtml
