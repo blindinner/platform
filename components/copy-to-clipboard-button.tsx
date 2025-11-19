@@ -5,9 +5,10 @@ import { useState } from 'react'
 interface CopyToClipboardButtonProps {
   text: string
   label?: string
+  compact?: boolean
 }
 
-export default function CopyToClipboardButton({ text, label = 'Copy to Clipboard' }: CopyToClipboardButtonProps) {
+export default function CopyToClipboardButton({ text, label = 'Copy to Clipboard', compact = false }: CopyToClipboardButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -19,6 +20,17 @@ export default function CopyToClipboardButton({ text, label = 'Copy to Clipboard
       console.error('Failed to copy:', error)
       alert('Failed to copy to clipboard')
     }
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handleCopy}
+        className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+      >
+        {copied ? '✓' : label}
+      </button>
+    )
   }
 
   return (

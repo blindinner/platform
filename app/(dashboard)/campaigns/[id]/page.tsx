@@ -35,11 +35,12 @@ export default async function CampaignDetailPage({
     redirect('/campaigns')
   }
 
-  // Get campaign stats
+  // Get campaign stats and full contact list
   const { data: contacts } = await supabase
     .from('contacts')
-    .select('id')
+    .select('*')
     .eq('campaign_id', campaignId)
+    .order('created_at', { ascending: false })
 
   const { data: clicks } = await supabase
     .from('clicks')
@@ -168,6 +169,83 @@ export default async function CampaignDetailPage({
           <p className="text-sm text-gray-600">Revenue</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">${totalRevenue.toFixed(2)}</p>
         </div>
+      </div>
+
+      {/* Contacts List */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Contacts & Referral Links</h2>
+          <p className="text-sm text-gray-600 mt-1">All contacts with their personalized referral links</p>
+        </div>
+        {contacts && contacts.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Referral Link
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Added
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {contacts.map((contact) => (
+                  <tr key={contact.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {contact.name || 'No name'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.phone || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={contact.short_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-800 truncate max-w-xs"
+                        >
+                          {contact.short_link}
+                        </a>
+                        <CopyToClipboardButton
+                          text={contact.short_link}
+                          label="Copy"
+                          compact
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        {new Date(contact.created_at).toLocaleDateString()}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-12 text-center text-gray-500">
+            <p className="text-lg mb-4">No contacts yet</p>
+            <p className="text-sm">Send emails to contacts to start tracking referrals</p>
+          </div>
+        )}
       </div>
 
       {/* Two Column Layout */}
