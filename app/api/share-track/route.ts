@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { contact_id, action, unique_code } = await request.json()
 
     if (!contact_id || !action) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400, headers: corsHeaders }
+      )
     }
 
     // Get campaign_id from contact
@@ -17,7 +32,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!contact) {
-      return NextResponse.json({ error: 'Contact not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Contact not found' },
+        { status: 404, headers: corsHeaders }
+      )
     }
 
     // Log the share action
@@ -30,13 +48,13 @@ export async function POST(request: NextRequest) {
       ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip')
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('Share tracking error:', error)
     return NextResponse.json(
       { error: 'Failed to track share action' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }

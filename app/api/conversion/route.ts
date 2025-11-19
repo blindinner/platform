@@ -2,13 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { resend } from '@/lib/resend/client'
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { ref_code, order_id, amount, buyer_email } = body
 
     if (!ref_code) {
-      return NextResponse.json({ error: 'Missing ref_code' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing ref_code' },
+        { status: 400, headers: corsHeaders }
+      )
     }
 
     // Look up contact
@@ -19,7 +34,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (contactError || !contact) {
-      return NextResponse.json({ error: 'Invalid ref code' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Invalid ref code' },
+        { status: 400, headers: corsHeaders }
+      )
     }
 
     // Check for duplicate conversion (same order_id)
@@ -31,10 +49,13 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (existing) {
-        return NextResponse.json({
-          status: 'duplicate',
-          message: 'Conversion already tracked'
-        })
+        return NextResponse.json(
+          {
+            status: 'duplicate',
+            message: 'Conversion already tracked'
+          },
+          { headers: corsHeaders }
+        )
       }
     }
 
@@ -48,10 +69,13 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (previousPurchase) {
-        return NextResponse.json({
-          status: 'not_new',
-          message: 'Buyer already purchased for this campaign'
-        })
+        return NextResponse.json(
+          {
+            status: 'not_new',
+            message: 'Buyer already purchased for this campaign'
+          },
+          { headers: corsHeaders }
+        )
       }
     }
 
@@ -75,16 +99,19 @@ export async function POST(request: NextRequest) {
     // Send notification email to referrer (async, don't await)
     sendConversionNotification(contact, conversion).catch(console.error)
 
-    return NextResponse.json({
-      status: 'success',
-      conversion_id: conversion.id
-    })
+    return NextResponse.json(
+      {
+        status: 'success',
+        conversion_id: conversion.id
+      },
+      { headers: corsHeaders }
+    )
 
   } catch (error) {
     console.error('Conversion tracking error:', error)
     return NextResponse.json(
       { error: 'Failed to track conversion' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }

@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { ref_code, page_url } = await request.json()
 
     if (!ref_code) {
-      return NextResponse.json({ error: 'ref_code is required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'ref_code is required' },
+        { status: 400, headers: corsHeaders }
+      )
     }
 
     // Look up contact by unique code
@@ -17,7 +32,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (contactError || !contact) {
-      return NextResponse.json({ error: 'Invalid ref code' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Invalid ref code' },
+        { status: 404, headers: corsHeaders }
+      )
     }
 
     // Log the click (page view)
@@ -30,13 +48,13 @@ export async function POST(request: NextRequest) {
       referrer_url: page_url || request.headers.get('referer')
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('Track click error:', error)
     return NextResponse.json(
       { error: 'Failed to track click' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
