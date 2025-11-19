@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
       contact_id: contact.id,
       campaign_id: contact.campaign_id,
       clicked_at: new Date().toISOString(),
-      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-      user_agent: request.headers.get('user-agent'),
-      referrer_url: page_url || request.headers.get('referer')
+      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'Not Available',
+      user_agent: request.headers.get('user-agent') || 'Not Available',
+      referrer_url: page_url || request.headers.get('referer') || 'Not Available'
     })
 
     return NextResponse.json({ success: true }, { headers: corsHeaders })

@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if buyer is new to this campaign
-    if (buyer_email) {
+    // Check if buyer is new to this campaign (only if we have a valid email)
+    if (buyer_email && buyer_email !== 'Not Available') {
       const { data: previousPurchase } = await supabaseAdmin
         .from('conversions')
         .select('id')
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       .insert({
         contact_id: contact.id,
         campaign_id: contact.campaign_id,
-        buyer_email,
-        order_id,
+        buyer_email: buyer_email || 'Not Available',
+        order_id: order_id || 'Not Available',
         amount: amount ? parseFloat(amount) : null,
         converted_at: new Date().toISOString(),
         notification_sent: false
