@@ -60,8 +60,8 @@ export default async function CampaignsPage() {
   }
 
   // Get stats for active and expired campaigns
-  const activeCampaignsWithStats = await getCampaignStats(activeCampaigns)
-  const expiredCampaignsWithStats = await getCampaignStats(expiredCampaigns)
+  const activeCampaignsWithStats = await getCampaignStats(activeCampaigns || [])
+  const expiredCampaignsWithStats = await getCampaignStats(expiredCampaigns || [])
 
   return (
     <div className="space-y-8">
