@@ -83,7 +83,7 @@ export default function Step6Review({ formData }: Step6ReviewProps) {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Destination URL</h3>
         <div>
           <dt className="text-sm font-medium text-gray-600">Referral links will redirect to:</dt>
-          <dd className="text-sm text-blue-600 mt-1 break-all">{formData.ticketUrl || '-'}</dd>
+          <dd className="text-sm text-gray-900 mt-1 break-all">{formData.ticketUrl || '-'}</dd>
           {formData.destinationDescription && (
             <p className="text-sm text-gray-500 mt-2">{formData.destinationDescription}</p>
           )}
@@ -144,37 +144,11 @@ export default function Step6Review({ formData }: Step6ReviewProps) {
         </div>
       </div>
 
-      {/* Warning */}
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
-        <div className="flex items-start gap-3">
-          <span className="text-yellow-600 text-2xl">⚠️</span>
-          <div>
-            <h3 className="font-semibold text-yellow-900 mb-2">Important Notice</h3>
-            <ul className="text-sm text-yellow-800 space-y-1 list-disc ml-4">
-              <li>Emails will be sent immediately to all {formData.contacts.length} contacts</li>
-              <li>Each contact will receive a unique referral tracking link</li>
-              <li>Once sent, this campaign cannot be edited or recalled</li>
-              <li>Make sure your "From Email" is verified in Resend</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-blue-900">{formData.contacts.length}</div>
-          <div className="text-sm text-blue-700 mt-1">Total Recipients</div>
-        </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-green-900">{formData.contacts.length}</div>
-          <div className="text-sm text-green-700 mt-1">Unique Links</div>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-purple-900">
-            {formData.creativePreview ? '1' : '0'}
-          </div>
-          <div className="text-sm text-purple-700 mt-1">Creative Asset</div>
+      <div className="flex justify-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center min-w-[200px]">
+          <div className="text-4xl font-bold text-gray-900">{formData.contacts.length}</div>
+          <div className="text-sm text-gray-700 mt-2">Total Recipients</div>
         </div>
       </div>
     </div>

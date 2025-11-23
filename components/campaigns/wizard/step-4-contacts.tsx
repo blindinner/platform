@@ -63,6 +63,13 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
     setManualEntry({ name: '', email: '', phone: '' })
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddManual()
+    }
+  }
+
   const handleRemoveContact = (index: number) => {
     const newContacts = formData.contacts.filter((_, i) => i !== index)
     updateFormData('contacts', newContacts)
@@ -89,7 +96,7 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
       </div>
 
       {/* CSV Upload */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+      <div className="border-2 border-dashed border-gray-200 rounded-lg p-8">
         <div className="text-center">
           <div className="text-gray-400 text-5xl mb-4">📄</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload CSV File</h3>
@@ -107,13 +114,13 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
             />
             <label
               htmlFor="csv-upload"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-3 bg-gray-900 text-white rounded-lg cursor-pointer hover:bg-gray-800 transition-colors font-medium"
             >
               Choose CSV File
             </label>
             <button
               onClick={downloadTemplate}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="px-6 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Download Template
             </button>
@@ -127,12 +134,11 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
         </div>
       </div>
 
-      {/* Manual Entry */}
-      <div className="border border-gray-300 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Or Add Manually</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
+      {/* Manual Entry - Inline Quick Add */}
+      <div className="border border-gray-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Add Contact</h3>
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Name (Optional)
             </label>
@@ -140,12 +146,13 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
               type="text"
               value={manualEntry.name}
               onChange={(e) => setManualEntry({ ...manualEntry, name: e.target.value })}
+              onKeyPress={handleKeyPress}
               placeholder="John Doe"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
 
-          <div>
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email <span className="text-red-500">*</span>
             </label>
@@ -153,12 +160,13 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
               type="email"
               value={manualEntry.email}
               onChange={(e) => setManualEntry({ ...manualEntry, email: e.target.value })}
+              onKeyPress={handleKeyPress}
               placeholder="john@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
 
-          <div>
+          <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone (Optional)
             </label>
@@ -166,23 +174,29 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
               type="tel"
               value={manualEntry.phone}
               onChange={(e) => setManualEntry({ ...manualEntry, phone: e.target.value })}
+              onKeyPress={handleKeyPress}
               placeholder="+1234567890"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
-        </div>
 
-        <button
-          onClick={handleAddManual}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-        >
-          Add Contact
-        </button>
+          <button
+            onClick={handleAddManual}
+            className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium h-[42px] flex items-center gap-2"
+            title="Add contact (or press Enter)"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">💡 Tip: Press Enter to quickly add contacts</p>
       </div>
 
       {/* Contacts List */}
       {formData.contacts.length > 0 && (
-        <div className="border border-gray-300 rounded-lg p-6">
+        <div className="border border-gray-200 rounded-lg p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               Contacts ({formData.contacts.length})
@@ -226,11 +240,9 @@ export default function Step4Contacts({ formData, updateFormData }: Step4Contact
       )}
 
       {formData.contacts.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-800">
-            ⚠️ No contacts added yet. Please upload a CSV file or add contacts manually.
-          </p>
-        </div>
+        <p className="text-red-600 text-center text-sm">
+          No contacts added yet. Please upload a CSV file or add contacts manually.
+        </p>
       )}
     </div>
   )

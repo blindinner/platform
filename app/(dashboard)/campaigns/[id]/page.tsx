@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import CopyToClipboardButton from '@/components/copy-to-clipboard-button'
+import DuplicateCampaignButton from '@/components/campaigns/duplicate-campaign-button'
+import ManualContactUpload from '@/components/campaigns/manual-contact-upload'
 import { generateTrackingPixel, generateConversionPixel, generateConversionExamples } from '@/lib/utils/pixel-generator'
 
 interface CampaignStats {
@@ -129,72 +131,78 @@ export default async function CampaignDetailPage({
   const examples = generateConversionExamples()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <Link href="/campaigns" className="text-sm text-blue-600 hover:text-blue-700 mb-2 inline-block">
+          <Link href="/campaigns" className="text-sm text-gray-500 hover:text-gray-900 mb-2 inline-block">
             ← Back to Campaigns
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
-          <p className="text-gray-600 mt-1">
-            Status: <span className={`inline-block px-2 py-1 rounded text-sm ${
-              campaign.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          <p className="text-gray-500 mt-1">
+            Status: <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+              campaign.status === 'active'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-gray-50 text-gray-700 border border-gray-200'
             }`}>
               {campaign.status}
             </span>
           </p>
         </div>
+        <DuplicateCampaignButton campaign={campaign} />
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Contacts</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalContacts}</p>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Contacts</p>
+          <p className="text-3xl font-bold text-gray-900">{totalContacts}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Clicks</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalClicks}</p>
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Clicks</p>
+          <p className="text-3xl font-bold text-gray-900">{totalClicks}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Conversions</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalConversions}</p>
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Conversions</p>
+          <p className="text-3xl font-bold text-gray-900">{totalConversions}</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Conversion Rate</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{conversionRate.toFixed(1)}%</p>
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Conversion Rate</p>
+          <p className="text-3xl font-bold text-gray-900">{conversionRate.toFixed(1)}%</p>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Revenue</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">${totalRevenue.toFixed(2)}</p>
+        <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+          <p className="text-sm text-gray-600 mb-2">Revenue</p>
+          <p className="text-3xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
         </div>
       </div>
 
+      {/* Manual Contact Upload */}
+      <ManualContactUpload campaignId={campaignId} />
+
       {/* Contacts List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Contacts & Referral Links</h2>
-          <p className="text-sm text-gray-600 mt-1">All contacts with their personalized referral links</p>
+          <p className="text-sm text-gray-500 mt-1">All contacts with their personalized referral links</p>
         </div>
         {contacts && contacts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-neutral-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Phone
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Referral Link
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Added
                   </th>
                 </tr>

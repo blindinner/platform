@@ -54,7 +54,7 @@ export default function Step2Creative({ formData, updateFormData }: Step2Creativ
       </div>
 
       {!formData.creativePreview ? (
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-400 transition-colors">
+        <div className="border-2 border-dashed border-gray-200 rounded-lg p-12 text-center hover:border-blue-400 transition-colors">
           <div className="text-gray-400 text-6xl mb-4">📸</div>
           <p className="text-gray-700 font-medium mb-2">
             Drag and drop your image here
@@ -71,7 +71,7 @@ export default function Step2Creative({ formData, updateFormData }: Step2Creativ
           />
           <label
             htmlFor="creative-upload"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors font-medium"
+            className="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg cursor-pointer hover:bg-gray-800 transition-colors font-medium"
           >
             Choose Image
           </label>
@@ -113,7 +113,7 @@ export default function Step2Creative({ formData, updateFormData }: Step2Creativ
 
           <button
             onClick={() => document.getElementById('creative-upload')?.click()}
-            className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Replace Image
           </button>

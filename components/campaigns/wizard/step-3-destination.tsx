@@ -36,10 +36,10 @@ export default function Step3Destination({ formData, updateFormData }: Step3Dest
             onChange={(e) => updateFormData('ticketUrl', e.target.value)}
             placeholder="https://example.com/tickets"
             required
-            className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 ${
               formData.ticketUrl && !isValidUrl(formData.ticketUrl)
                 ? 'border-red-300 focus:ring-red-500'
-                : 'border-gray-300'
+                : 'border-gray-200'
             }`}
           />
           {formData.ticketUrl && (
@@ -71,18 +71,18 @@ export default function Step3Destination({ formData, updateFormData }: Step3Dest
           onChange={(e) => updateFormData('destinationDescription', e.target.value)}
           placeholder="e.g., Official ticket sales page for VIP access"
           rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
         />
         <p className="text-sm text-gray-500 mt-1">
           Internal note to remember what this URL is for
         </p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-        <p className="text-sm font-medium text-blue-900">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+        <p className="text-sm font-medium text-gray-700">
           💡 Common destination types:
         </p>
-        <ul className="text-sm text-blue-800 space-y-1 ml-4 list-disc">
+        <ul className="text-sm text-gray-700 space-y-1 ml-4 list-disc">
           <li>Ticket purchase page (Eventbrite, Ticketmaster, etc.)</li>
           <li>Event registration form</li>
           <li>Landing page with event details</li>
@@ -94,7 +94,7 @@ export default function Step3Destination({ formData, updateFormData }: Step3Dest
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
           <p className="text-sm text-gray-600 break-all">
-            Referral links will redirect to: <span className="font-mono text-blue-600">{formData.ticketUrl}</span>
+            Referral links will redirect to: <span className="font-mono text-gray-900">{formData.ticketUrl}</span>
           </p>
         </div>
       )}

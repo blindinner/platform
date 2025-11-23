@@ -12,7 +12,7 @@ const STEPS = [
   { number: 3, name: 'Review', description: 'Review & create' },
 ]
 
-export default function NewCampaignPage() {
+export default function NewCampaignV2Page() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [createdCampaignId, setCreatedCampaignId] = useState<string | null>(null)
@@ -60,6 +60,7 @@ export default function NewCampaignPage() {
           event_date: toDbFormat(formData.eventDate),
           promotion_end_date: toDbFormat(formData.eventEndDate || formData.eventDate),
           destination_url: formData.ticketUrl,
+          // No creative, contacts, or email template needed for webhook-based campaigns
           status: 'active'
         })
       })

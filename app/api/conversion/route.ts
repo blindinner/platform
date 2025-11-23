@@ -26,16 +26,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Look up contact
+    // Look up contact and campaign
     const { data: contact, error: contactError } = await supabaseAdmin
       .from('contacts')
-      .select('id, campaign_id, name, email')
+      .select(`
+        id,
+        campaign_id,
+        name,
+        email,
+        campaigns (
+          event_date,
+          status
+        )
+      `)
       .eq('unique_code', ref_code)
       .single()
 
     if (contactError || !contact) {
       return NextResponse.json(
         { error: 'Invalid ref code' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    const campaign = contact.campaigns as any
+    const today = new Date().toISOString().split('T')[0]
+
+    // Check if campaign is archived
+    if (campaign.status === 'archived') {
+      return NextResponse.json(
+        { error: 'Campaign is no longer active' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    // Check if campaign has expired
+    if (campaign.event_date < today) {
+      return NextResponse.json(
+        { error: 'Campaign has expired' },
         { status: 400, headers: corsHeaders }
       )
     }

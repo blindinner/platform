@@ -16,7 +16,9 @@ export async function GET(
         campaign_id,
         campaigns (
           id,
+          name,
           destination_url,
+          event_date,
           promotion_end_date,
           status
         )
@@ -29,15 +31,33 @@ export async function GET(
     }
 
     const campaign = contact.campaigns as any
+    const today = new Date().toISOString().split('T')[0]
 
-    // Check if campaign is active
-    if (campaign.status !== 'active') {
-      return new NextResponse('This promotion has ended', { status: 410 })
+    // Check if campaign is archived
+    if (campaign.status === 'archived') {
+      return new NextResponse('This campaign is no longer available', { status: 410 })
     }
 
-    // Check if promotion period has ended
-    if (new Date() > new Date(campaign.promotion_end_date)) {
-      return new NextResponse('This promotion has ended', { status: 410 })
+    // Check if campaign event date has passed (campaign expired)
+    if (campaign.event_date < today) {
+      const expiredUrl = new URL('/campaign-expired', request.url)
+      expiredUrl.searchParams.set('campaign', campaign.name || 'This campaign')
+      expiredUrl.searchParams.set('date', campaign.event_date)
+      if (campaign.destination_url) {
+        expiredUrl.searchParams.set('destination', campaign.destination_url)
+      }
+      return NextResponse.redirect(expiredUrl.toString(), 302)
+    }
+
+    // Check if promotion period has ended (optional additional check)
+    if (campaign.promotion_end_date && new Date() > new Date(campaign.promotion_end_date)) {
+      const expiredUrl = new URL('/campaign-expired', request.url)
+      expiredUrl.searchParams.set('campaign', campaign.name || 'This campaign')
+      expiredUrl.searchParams.set('date', campaign.promotion_end_date)
+      if (campaign.destination_url) {
+        expiredUrl.searchParams.set('destination', campaign.destination_url)
+      }
+      return NextResponse.redirect(expiredUrl.toString(), 302)
     }
 
     // Log the click

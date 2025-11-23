@@ -36,37 +36,18 @@ export default function Step5Email({ formData, updateFormData }: Step5EmailProps
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            From Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.fromName}
-            onChange={(e) => updateFormData('fromName', e.target.value)}
-            placeholder="Your Company"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            From Email <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            value={formData.fromEmail}
-            onChange={(e) => updateFormData('fromEmail', e.target.value)}
-            placeholder="events@yourcompany.com"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            Must be verified in Resend
-          </p>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          From Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          value={formData.fromName}
+          onChange={(e) => updateFormData('fromName', e.target.value)}
+          placeholder="Your Company"
+          required
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+        />
       </div>
 
       <div>
@@ -79,7 +60,7 @@ export default function Step5Email({ formData, updateFormData }: Step5EmailProps
           onChange={(e) => updateFormData('subject', e.target.value)}
           placeholder="You're invited to share our event!"
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
         />
       </div>
 
@@ -119,31 +100,31 @@ export default function Step5Email({ formData, updateFormData }: Step5EmailProps
           rows={10}
           required
           placeholder="Hi {name},&#10;&#10;We're excited to invite you to share {event} with your network!&#10;&#10;Your unique referral link: {link}&#10;&#10;Thank you for being part of our community!"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono text-sm"
         />
         <p className="text-sm text-gray-500 mt-1">
           Use variables to personalize the email. The creative image and unique link will be automatically included.
         </p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm font-medium text-blue-900 mb-2">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <p className="text-sm font-medium text-gray-700 mb-2">
           📧 Available Variables:
         </p>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li><code className="bg-blue-100 px-2 py-1 rounded">{'{name}'}</code> - Contact's name (will be skipped if not available)</li>
-          <li><code className="bg-blue-100 px-2 py-1 rounded">{'{event}'}</code> - Event name from Step 1</li>
-          <li><code className="bg-blue-100 px-2 py-1 rounded">{'{link}'}</code> - Unique referral link for the contact</li>
+        <ul className="text-sm text-gray-700 space-y-1">
+          <li><code className="bg-gray-100 px-2 py-1 rounded">{'{name}'}</code> - Contact's name (will be skipped if not available)</li>
+          <li><code className="bg-gray-100 px-2 py-1 rounded">{'{event}'}</code> - Event name from Step 1</li>
+          <li><code className="bg-gray-100 px-2 py-1 rounded">{'{link}'}</code> - Unique referral link for the contact</li>
         </ul>
       </div>
 
       {/* Preview */}
       {formData.emailBody && (
-        <div className="border border-gray-300 rounded-lg p-6 bg-gray-50">
+        <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Preview:</h3>
           <div className="bg-white p-4 rounded border border-gray-200">
             <p className="text-sm text-gray-600 mb-2">
-              <strong>From:</strong> {formData.fromName || 'Your Name'} ({formData.fromEmail || 'email@example.com'})
+              <strong>From:</strong> {formData.fromName || 'Your Name'}
             </p>
             <p className="text-sm text-gray-600 mb-4">
               <strong>Subject:</strong> {formData.subject || 'No subject'}
