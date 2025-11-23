@@ -15,7 +15,7 @@ const STEPS = [
 export default function NewCampaignPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [createdCampaignId, setCreatedCampaignId] = useState<string | null>(null)
+  const [createdCampaignId, setCreatedCampaignId] = useState<string | undefined>(undefined)
   const [formData, setFormData] = useState({
     campaignName: '',
     eventDate: '',
