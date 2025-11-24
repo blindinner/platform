@@ -33,6 +33,13 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
+    // Validate that campaign has email template (for manual email campaigns)
+    if (!campaign.email_template || !campaign.email_subject) {
+      return NextResponse.json({
+        error: 'This campaign does not have an email template configured. This endpoint is only for campaigns with custom email templates.'
+      }, { status: 400 })
+    }
+
     // Process each contact
     const results = []
 

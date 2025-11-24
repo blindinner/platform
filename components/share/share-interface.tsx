@@ -11,7 +11,7 @@ interface ShareInterfaceProps {
   uniqueCode: string
   referralLink: string
   campaignName: string
-  creativeUrl: string
+  creativeUrl?: string | null
   destinationUrl: string
 }
 
@@ -62,21 +62,23 @@ export default function ShareInterface({
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-8">
 
-        {/* Creative Preview */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
-          <div className="relative">
-            <img
-              src={creativeUrl}
-              alt={campaignName}
-              className="w-full h-auto"
-            />
-            <div className="absolute top-4 right-4">
-              <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold text-gray-900 shadow-lg">
-                📸 Your Creative
-              </span>
+        {/* Creative Preview (only if creative exists) */}
+        {creativeUrl && (
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
+            <div className="relative">
+              <img
+                src={creativeUrl}
+                alt={campaignName}
+                className="w-full h-auto"
+              />
+              <div className="absolute top-4 right-4">
+                <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold text-gray-900 shadow-lg">
+                  📸 Your Creative
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Share Options */}
         <div className="bg-white rounded-3xl shadow-2xl p-6 mb-6">

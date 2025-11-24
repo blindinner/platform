@@ -8,10 +8,10 @@ interface DuplicateCampaignButtonProps {
     name: string
     event_date: string
     promotion_end_date: string
-    creative_image_url: string
+    creative_image_url?: string | null
     destination_url: string
-    email_subject: string
-    email_template: string
+    email_subject?: string | null
+    email_template?: string | null
   }
 }
 

@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
       creative_image_url,
       destination_url,
       email_subject,
-      email_template
+      email_template,
+      status = 'draft'
     } = body
 
     // Create campaign
@@ -30,11 +31,11 @@ export async function POST(request: NextRequest) {
         name,
         event_date,
         promotion_end_date,
-        creative_image_url,
+        creative_image_url: creative_image_url || null,
         destination_url,
-        email_subject,
-        email_template,
-        status: 'draft'
+        email_subject: email_subject || null,
+        email_template: email_template || null,
+        status
       })
       .select()
       .single()
