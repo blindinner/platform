@@ -27,19 +27,18 @@ export default function NewCampaignPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    // If moving from step 1 to step 2, create the campaign
+    if (currentStep === 1 && !createdCampaignId) {
+      await createCampaign()
+    }
+
     if (currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1)
     }
   }
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  const handleSubmit = async () => {
+  const createCampaign = async () => {
     try {
       // Helper function to convert dd-mm-yyyy to yyyy-mm-dd for database
       const toDbFormat = (dateStr: string) => {
@@ -69,12 +68,36 @@ export default function NewCampaignPage() {
       }
 
       const campaign = await campaignRes.json()
+      setCreatedCampaignId(campaign.id)
 
-      alert(`Event created successfully! Your webhook URL is ready.`)
-      router.push(`/campaigns/${campaign.id}`)
+      return campaign.id
     } catch (error) {
       console.error('Campaign creation error:', error)
       alert(error instanceof Error ? error.message : 'Failed to create event')
+      throw error
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const handleSubmit = async () => {
+    // Campaign is already created from step 1, just redirect
+    if (createdCampaignId) {
+      alert(`Event created successfully! Your webhook URL is ready.`)
+      router.push(`/campaigns/${createdCampaignId}`)
+    } else {
+      // Fallback: create campaign if somehow not created yet
+      try {
+        const campaignId = await createCampaign()
+        alert(`Event created successfully! Your webhook URL is ready.`)
+        router.push(`/campaigns/${campaignId}`)
+      } catch (error) {
+        // Error already handled in createCampaign
+      }
     }
   }
 
