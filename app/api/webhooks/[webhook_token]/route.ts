@@ -17,10 +17,10 @@ export async function OPTIONS() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ campaign_id: string }> }
+  { params }: { params: Promise<{ webhook_token: string }> }
 ) {
   try {
-    const { campaign_id } = await params
+    const { webhook_token } = await params
     const body = await request.json()
 
     // Validate required fields
@@ -33,16 +33,17 @@ export async function POST(
       )
     }
 
-    // Get campaign details
+    // Get campaign details by webhook_token (secure lookup)
     const { data: campaign, error: campaignError } = await supabaseAdmin
       .from('campaigns')
       .select('*')
-      .eq('id', campaign_id)
+      .eq('webhook_token', webhook_token)
       .single()
 
     if (campaignError || !campaign) {
+      console.error('Campaign lookup failed:', { webhook_token, error: campaignError })
       return NextResponse.json(
-        { error: 'Campaign not found' },
+        { error: 'Invalid webhook URL. Campaign not found.' },
         { status: 404, headers: corsHeaders }
       )
     }
@@ -51,7 +52,7 @@ export async function POST(
     const { data: existingContact } = await supabaseAdmin
       .from('contacts')
       .select('unique_code, short_link')
-      .eq('campaign_id', campaign_id)
+      .eq('campaign_id', campaign.id)
       .eq('email', customer_email)
       .single()
 
@@ -77,7 +78,7 @@ export async function POST(
     const { data: contact, error: contactError } = await supabaseAdmin
       .from('contacts')
       .insert({
-        campaign_id: campaign_id,
+        campaign_id: campaign.id,
         name: customer_name || 'Customer',
         email: customer_email,
         unique_code: uniqueCode,

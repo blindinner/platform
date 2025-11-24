@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,10 @@ export async function POST(request: NextRequest) {
       status = 'draft'
     } = body
 
+    // Generate secure webhook token (48 random bytes = 96 hex chars)
+    // Format: camp_<random_hex> for easy identification
+    const webhookToken = `camp_${crypto.randomBytes(24).toString('hex')}`
+
     // Create campaign
     const { data: campaign, error } = await supabase
       .from('campaigns')
@@ -35,18 +40,24 @@ export async function POST(request: NextRequest) {
         destination_url,
         email_subject: email_subject || null,
         email_template: email_template || null,
-        status
+        status,
+        webhook_token: webhookToken,
+        integration_type: 'webhook_campaign'
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase insert error:', error)
+      throw error
+    }
 
     return NextResponse.json(campaign)
   } catch (error) {
     console.error('Campaign creation error:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return NextResponse.json(
-      { error: 'Failed to create campaign' },
+      { error: 'Failed to create campaign', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
