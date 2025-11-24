@@ -198,27 +198,23 @@ export default function Step2Integration({ campaign_id }: Step2IntegrationProps)
                 </button>
 
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Required Payload (Option 1 - Campaign ID):</p>
-                  <pre className="text-xs text-gray-800 overflow-x-auto mb-4">
-{`{
-  "campaign_id": "${campaign_id || 'YOUR_CAMPAIGN_ID'}",
-  "customer_email": "john@example.com",
-  "customer_name": "John Doe",
-  "order_id": "ORDER_12345"
-}`}
-                  </pre>
-
-                  <p className="text-sm font-medium text-gray-700 mb-2">Required Payload (Option 2 - External Event ID):</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Required Payload:</p>
                   <pre className="text-xs text-gray-800 overflow-x-auto">
 {`{
-  "external_event_id": "your_shopify_product_123",
+  "external_event_id": "your_event_product_id",
   "customer_email": "john@example.com",
   "customer_name": "John Doe",
   "order_id": "ORDER_12345"
 }`}
                   </pre>
-                  <p className="text-xs text-gray-600 mt-2">
-                    💡 Map your external event IDs to campaigns in campaign settings to use Option 2.
+                  <p className="text-xs text-gray-600 mt-3">
+                    <strong>💡 How to use:</strong><br/>
+                    1. In campaign settings, map your platform's event/product ID to this campaign<br/>
+                    2. When sending webhooks, include your event/product ID as <code className="bg-gray-200 px-1 rounded">external_event_id</code><br/>
+                    3. We'll automatically route to the correct campaign
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    <strong>Examples:</strong> Shopify product ID, Eventbrite event ID, or your custom event identifier
                   </p>
                 </div>
               </>
