@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 interface InstagramShareButtonProps {
-  creativeUrl: string
+  creativeUrl?: string | null
   campaignName: string
   referralLink: string
   contactId: string
@@ -19,6 +19,11 @@ export default function InstagramShareButton({
   const [isDownloading, setIsDownloading] = useState(false)
 
   const handleInstagramShare = async () => {
+    if (!creativeUrl) {
+      alert('No creative image available for this campaign.')
+      return
+    }
+
     setIsDownloading(true)
 
     try {

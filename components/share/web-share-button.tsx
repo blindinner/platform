@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 interface WebShareButtonProps {
-  creativeUrl: string
+  creativeUrl?: string | null
   campaignName: string
   referralLink: string
   contactId: string
