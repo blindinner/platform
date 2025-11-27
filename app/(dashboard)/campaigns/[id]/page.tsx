@@ -176,6 +176,63 @@ export default async function CampaignDetailPage({
         </div>
       </div>
 
+      {/* Webhook URLs */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Webhook Integration</h2>
+
+        {/* Simple Mode - Campaign-Specific Webhook */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900">Simple Mode (Recommended)</h3>
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">One URL per campaign</span>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Copy this URL and paste it into your ticketing platform's webhook configuration.
+          </p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+            <code className="text-sm text-gray-900 break-all">
+              {appUrl}/api/webhooks/{campaign.webhook_token}
+            </code>
+          </div>
+          <CopyToClipboardButton
+            text={`${appUrl}/api/webhooks/${campaign.webhook_token}`}
+            label="Copy Simple Webhook URL"
+          />
+        </div>
+
+        {/* Advanced Mode - Organization Webhook */}
+        <div className="pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900">Advanced Mode (Multi-Event)</h3>
+            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">One URL for all campaigns</span>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Use this organization-level webhook for all your campaigns. Include your event/product ID in the payload.
+          </p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+            <code className="text-sm text-gray-900 break-all">
+              {appUrl}/api/webhooks/org/[YOUR_CLIENT_ID]
+            </code>
+          </div>
+          <p className="text-xs text-gray-600 mb-3">
+            💡 Your organization webhook URL is available in Settings or during campaign creation.
+          </p>
+          <details className="text-sm">
+            <summary className="cursor-pointer text-gray-700 font-medium mb-2">Show payload example</summary>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-2">
+              <pre className="text-xs text-gray-800 overflow-x-auto">
+{`{
+  "external_event_id": "your_event_product_id",
+  "customer_email": "john@example.com",
+  "customer_name": "John Doe",
+  "order_id": "ORDER_12345"
+}`}
+              </pre>
+            </div>
+          </details>
+        </div>
+      </div>
+
       {/* Manual Contact Upload */}
       <ManualContactUpload campaignId={campaignId} />
 

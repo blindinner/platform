@@ -18,24 +18,11 @@ export default async function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-neutral-50 border-r border-gray-200 flex flex-col">
         {/* Logo */}
-        <div className="p-6">
+        <div className="p-6 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full border-2 border-gray-900"></div>
             <span className="text-lg font-semibold text-gray-900">Acme Inc.</span>
           </div>
-        </div>
-
-        {/* Quick Create Button */}
-        <div className="px-4 mb-6">
-          <Link
-            href="/campaigns/new"
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Quick Create
-          </Link>
         </div>
 
         {/* Navigation */}

@@ -16,6 +16,11 @@ export default function SettingsPage() {
     email: '',
     companyName: '',
 
+    // Webhook & Integration
+    clientId: '',
+    webhookDefaultCommissionType: 'fixed' as 'fixed' | 'percentage',
+    webhookDefaultCommissionValue: 3.00,
+
     // Branding
     logoUrl: '',
     brandColor: '#000000',
@@ -166,6 +171,99 @@ export default function SettingsPage() {
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Webhook & Integration */}
+      <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Webhook & Integration</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Configure your webhook URL and default commission settings for auto-created campaigns
+        </p>
+
+        {/* Webhook URL */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Your Webhook URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={formData.clientId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/org/${formData.clientId}` : 'Loading...'}
+              readOnly
+              className="flex-1 px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 font-mono text-sm"
+            />
+            <button
+              onClick={() => {
+                const webhookUrl = `${window.location.origin}/api/webhooks/org/${formData.clientId}`
+                navigator.clipboard.writeText(webhookUrl)
+                alert('Webhook URL copied to clipboard!')
+              }}
+              disabled={!formData.clientId}
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 text-sm font-medium"
+            >
+              Copy
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Use this single webhook URL for all your events. We'll auto-create campaigns as purchases come in.
+          </p>
+        </div>
+
+        {/* Default Commission */}
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Default Commission Settings</h3>
+          <p className="text-xs text-gray-600 mb-4">
+            When a new event_id arrives via webhook, we'll auto-create a campaign with these default settings. You can always customize individual campaigns later.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Commission Type
+              </label>
+              <select
+                value={formData.webhookDefaultCommissionType}
+                onChange={(e) => setFormData({ ...formData, webhookDefaultCommissionType: e.target.value as 'fixed' | 'percentage' })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+              >
+                <option value="fixed">Fixed Amount ($)</option>
+                <option value="percentage">Percentage (%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Commission Value
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  {formData.webhookDefaultCommissionType === 'fixed' ? '$' : '%'}
+                </span>
+                <input
+                  type="number"
+                  step={formData.webhookDefaultCommissionType === 'fixed' ? '0.01' : '1'}
+                  min="0"
+                  max={formData.webhookDefaultCommissionType === 'percentage' ? '100' : undefined}
+                  value={formData.webhookDefaultCommissionValue}
+                  onChange={(e) => setFormData({ ...formData, webhookDefaultCommissionValue: parseFloat(e.target.value) })}
+                  className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.webhookDefaultCommissionType === 'fixed'
+                  ? `Referrers earn $${formData.webhookDefaultCommissionValue.toFixed(2)} per sale`
+                  : `Referrers earn ${formData.webhookDefaultCommissionValue}% of ticket price`
+                }
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-blue-900">
+              <strong>💡 How it works:</strong> When a purchase comes in for a new event_id, we'll create a campaign with these settings automatically. For special events that need different commission rates, create a campaign manually before the first purchase arrives.
+            </p>
           </div>
         </div>
       </div>

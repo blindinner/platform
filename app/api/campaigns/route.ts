@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,16 +16,19 @@ export async function POST(request: NextRequest) {
       name,
       event_date,
       promotion_end_date,
+      event_end_date,
       creative_image_url,
       destination_url,
-      email_subject,
-      email_template,
+      external_event_id,
+      commission_type = 'fixed',
+      commission_value = 3.00,
+      credit_unlock_type = 'event_based',
+      credit_unlock_days = 0,
       status = 'draft'
     } = body
 
-    // Generate secure webhook token (48 random bytes = 96 hex chars)
-    // Format: camp_<random_hex> for easy identification
-    const webhookToken = `camp_${crypto.randomBytes(24).toString('hex')}`
+    // Determine integration type based on whether external_event_id is provided
+    const integrationType = external_event_id ? 'webhook_organization' : 'manual'
 
     // Create campaign
     const { data: campaign, error } = await supabase
@@ -36,19 +38,34 @@ export async function POST(request: NextRequest) {
         name,
         event_date,
         promotion_end_date,
+        event_end_date: event_end_date || null,
         creative_image_url: creative_image_url || null,
         destination_url,
-        email_subject: email_subject || null,
-        email_template: email_template || null,
+        external_event_id: external_event_id || null,
+        commission_type,
+        commission_value,
+        credit_unlock_type,
+        credit_unlock_days,
         status,
-        webhook_token: webhookToken,
-        integration_type: 'webhook_campaign'
+        integration_type: integrationType
       })
       .select()
       .single()
 
     if (error) {
       console.error('Supabase insert error:', error)
+
+      // Check for unique constraint violation on external_event_id
+      if (error.code === '23505' && error.message.includes('external_event')) {
+        return NextResponse.json(
+          {
+            error: 'Duplicate external event ID',
+            details: `You already have a campaign mapped to event ID "${external_event_id}". Each event ID can only be used once. Please use a different ID or update your existing campaign.`
+          },
+          { status: 409 }
+        )
+      }
+
       throw error
     }
 

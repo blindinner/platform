@@ -4,6 +4,9 @@ interface Step1EventDetailsProps {
     eventDate: string
     eventEndDate: string
     ticketUrl: string
+    externalEventId?: string
+    commissionType: 'fixed' | 'percentage'
+    commissionValue: number
   }
   updateFormData: (field: string, value: any) => void
 }
@@ -127,6 +130,87 @@ export default function Step1EventDetails({ formData, updateFormData }: Step1Eve
         <p className="text-sm text-gray-500 mt-1">
           Where referral links will send people to buy tickets
         </p>
+      </div>
+
+      {/* Commission Settings */}
+      <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Referral Commission Settings</h3>
+        <p className="text-xs text-gray-600 mb-4">
+          Set how much credit referrers earn for each ticket sale
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Commission Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.commissionType}
+              onChange={(e) => updateFormData('commissionType', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+            >
+              <option value="fixed">Fixed Amount ($)</option>
+              <option value="percentage">Percentage (%)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Commission Value <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                {formData.commissionType === 'fixed' ? '$' : '%'}
+              </span>
+              <input
+                type="number"
+                step={formData.commissionType === 'fixed' ? '0.01' : '1'}
+                min="0"
+                max={formData.commissionType === 'percentage' ? '100' : undefined}
+                value={formData.commissionValue}
+                onChange={(e) => updateFormData('commissionValue', parseFloat(e.target.value))}
+                className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {formData.commissionType === 'fixed'
+                ? `$${formData.commissionValue.toFixed(2)} credit per sale`
+                : `${formData.commissionValue}% of ticket price as credit`
+              }
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-blue-900">
+            <strong>💡 How it works:</strong> When someone buys a ticket using a referral link, the referrer earns this commission as credit. Credits unlock after the event ends and can be redeemed on future purchases.
+          </p>
+        </div>
+      </div>
+
+      {/* Optional: External Event/Product ID for Organization Webhook */}
+      <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+        <label className="block text-sm font-medium text-blue-900 mb-2">
+          Your Event/Product ID (Optional - For Advanced Webhook)
+        </label>
+        <input
+          type="text"
+          value={formData.externalEventId || ''}
+          onChange={(e) => updateFormData('externalEventId', e.target.value)}
+          placeholder="e.g., A123, shopify_prod_789, evt_eventbrite_456"
+          className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        />
+        <div className="mt-2 text-sm text-blue-800">
+          <p className="font-medium mb-1">💡 When to use this:</p>
+          <ul className="list-disc list-inside space-y-1 text-xs">
+            <li><strong>Shopify:</strong> Your product ID (e.g., "prod_ABC123")</li>
+            <li><strong>Eventbrite:</strong> Your event ID (e.g., "123456789")</li>
+            <li><strong>Custom Platform:</strong> Any identifier you use (e.g., "summer-fest")</li>
+          </ul>
+          <p className="mt-2 text-xs">
+            This allows you to use one organization webhook for all events. Leave blank if using simple mode (one webhook per campaign).
+          </p>
+        </div>
       </div>
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

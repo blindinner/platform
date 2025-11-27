@@ -53,7 +53,6 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { status } = body
 
     // Verify campaign belongs to user
     const { data: campaign, error: campaignError } = await supabase
@@ -67,24 +66,68 @@ export async function PATCH(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
-    // Update campaign status
-    const { error: updateError } = await supabase
+    // Only allow updating specific fields
+    const allowedFields = [
+      'name',
+      'event_date',
+      'promotion_end_date',
+      'event_end_date',
+      'creative_image_url',
+      'destination_url',
+      'external_event_id',
+      'commission_type',
+      'commission_value',
+      'credit_unlock_type',
+      'credit_unlock_days',
+      'status'
+    ]
+
+    const updates: Record<string, any> = {}
+    for (const [key, value] of Object.entries(body)) {
+      if (allowedFields.includes(key)) {
+        updates[key] = value
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid fields to update' },
+        { status: 400 }
+      )
+    }
+
+    // Update campaign
+    const { data: updatedCampaign, error: updateError } = await supabase
       .from('campaigns')
-      .update({ status })
+      .update(updates)
       .eq('id', campaignId)
       .eq('organizer_id', user.id)
+      .select()
+      .single()
 
     if (updateError) {
       console.error('Update error:', updateError)
+
+      // Check for unique constraint violation on external_event_id
+      if (updateError.code === '23505' && updateError.message.includes('external_event')) {
+        return NextResponse.json(
+          {
+            error: 'Duplicate external event ID',
+            details: `You already have another campaign mapped to this event ID. Each event ID can only be used once. Please use a different ID.`
+          },
+          { status: 409 }
+        )
+      }
+
       return NextResponse.json({ error: 'Failed to update campaign' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, message: 'Campaign archived successfully' })
+    return NextResponse.json(updatedCampaign)
 
   } catch (error) {
-    console.error('Archive campaign error:', error)
+    console.error('Update campaign error:', error)
     return NextResponse.json(
-      { error: 'Failed to archive campaign' },
+      { error: 'Failed to update campaign' },
       { status: 500 }
     )
   }

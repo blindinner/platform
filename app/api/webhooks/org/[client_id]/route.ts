@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { resend } from '@/lib/resend/client'
 import crypto from 'crypto'
+import {
+  checkRateLimit,
+  logWebhookRequest,
+  detectSuspiciousActivity,
+  getClientIp,
+  getRelevantHeaders
+} from '@/lib/webhook-security'
 
 // CORS headers for webhook calls from external systems
 const corsHeaders = {
@@ -19,22 +25,50 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ client_id: string }> }
 ) {
+  const startTime = Date.now()
+  const clientIp = getClientIp(request)
+  const requestHeaders = getRelevantHeaders(request)
+
+  let campaignId: string | null = null
+  let responseStatus = 500
+  let responseMessage = 'Unknown error'
+  let errorMessage: string | undefined
+
   try {
     const { client_id } = await params
     const body = await request.json()
 
     // Validate required fields
     const {
-      campaign_id,
       customer_email,
       customer_name,
+      customer_first_name,
+      customer_last_name,
+      customer_phone,
       order_id,
       external_event_id,
+      ticket_url,
+      amount,
+      referral_code, // Optional - if provided, this purchase came from a referral
     } = body
 
     if (!customer_email) {
       return NextResponse.json(
         { error: 'customer_email is required' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    if (!external_event_id) {
+      return NextResponse.json(
+        { error: 'external_event_id is required' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    if (!ticket_url) {
+      return NextResponse.json(
+        { error: 'ticket_url is required' },
         { status: 400, headers: corsHeaders }
       )
     }
@@ -56,80 +90,168 @@ export async function POST(
 
     const organizerId = userProfile.user_id
 
-    // Determine which campaign to use
-    let campaign
+    // Look up campaign by external_event_id
+    let { data: campaign, error: campaignError } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('organizer_id', organizerId)
+      .eq('external_event_id', external_event_id)
+      .single()
 
-    // Option 1: campaign_id provided directly in payload (recommended)
-    if (campaign_id) {
-      const { data, error: campaignError } = await supabaseAdmin
-        .from('campaigns')
-        .select('*')
-        .eq('id', campaign_id)
-        .eq('organizer_id', organizerId)
+    // Auto-create campaign if it doesn't exist
+    if (campaignError || !campaign) {
+      console.log(`Auto-creating campaign for event_id: ${external_event_id}`)
+
+      // Get organization default settings
+      const { data: orgProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('webhook_default_commission_type, webhook_default_commission_value, default_credit_unlock_type, default_credit_unlock_days')
+        .eq('user_id', organizerId)
         .single()
 
-      if (campaignError || !data) {
+      const defaultCommissionType = orgProfile?.webhook_default_commission_type || 'fixed'
+      const defaultCommissionValue = orgProfile?.webhook_default_commission_value || 3.00
+      const defaultCreditUnlockType = orgProfile?.default_credit_unlock_type || 'event_based'
+      const defaultCreditUnlockDays = orgProfile?.default_credit_unlock_days || 0
+
+      // Create campaign with defaults
+      const { data: newCampaign, error: createError } = await supabaseAdmin
+        .from('campaigns')
+        .insert({
+          organizer_id: organizerId,
+          name: external_event_id, // Use event_id as name by default
+          external_event_id: external_event_id,
+          destination_url: ticket_url, // Use ticket_url from payload
+          commission_type: defaultCommissionType,
+          commission_value: defaultCommissionValue,
+          credit_unlock_type: defaultCreditUnlockType,
+          credit_unlock_days: defaultCreditUnlockDays,
+          status: 'active', // Auto-created campaigns are active immediately
+          integration_type: 'webhook_organization'
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        console.error('Auto-create campaign error:', createError)
         return NextResponse.json(
           {
-            error: 'Campaign not found',
-            details: `No campaign found with id=${campaign_id} for this client`
+            error: 'Failed to auto-create campaign',
+            details: createError.message
           },
-          { status: 404, headers: corsHeaders }
+          { status: 500, headers: corsHeaders }
         )
       }
 
-      campaign = data
+      campaign = newCampaign
+      console.log(`Created campaign ${campaign.id} for event ${external_event_id}`)
     }
-    // Option 2: Look up campaign by external_event_id
-    else if (external_event_id) {
-      const { data, error: campaignError } = await supabaseAdmin
-        .from('campaigns')
-        .select('*')
-        .eq('organizer_id', organizerId)
-        .eq('external_event_id', external_event_id)
-        .single()
 
-      if (campaignError || !data) {
-        return NextResponse.json(
-          {
-            error: 'Campaign not found for external event',
-            details: `No campaign mapped to external_event_id=${external_event_id}. Please create a campaign and map this event ID.`
-          },
-          { status: 404, headers: corsHeaders }
-        )
-      }
+    campaignId = campaign.id
 
-      campaign = data
+    // Check if campaign is active
+    if (campaign.status !== 'active') {
+      responseStatus = 403
+      responseMessage = 'Campaign not active'
+      errorMessage = 'This campaign is not yet active. Please complete setup first.'
+
+      await logWebhookRequest({
+        campaign_id: campaign.id,
+        webhook_type: 'organization',
+        request_ip: clientIp,
+        request_headers: requestHeaders,
+        request_payload: body,
+        response_status: responseStatus,
+        response_message: responseMessage,
+        processing_time_ms: Date.now() - startTime,
+        error_message: errorMessage
+      })
+
+      return NextResponse.json(
+        { error: responseMessage, details: errorMessage },
+        { status: responseStatus, headers: corsHeaders }
+      )
     }
-    // Neither option provided
-    else {
+
+    // Check rate limit
+    const rateLimit = await checkRateLimit(campaign.id)
+
+    if (!rateLimit.allowed) {
+      responseStatus = 429
+      responseMessage = 'Rate limit exceeded'
+      errorMessage = `Rate limit of ${rateLimit.limit} requests per hour exceeded`
+
+      // Log rate-limited request
+      await logWebhookRequest({
+        campaign_id: campaign.id,
+        webhook_type: 'organization',
+        request_ip: clientIp,
+        request_headers: requestHeaders,
+        request_payload: body,
+        response_status: responseStatus,
+        response_message: responseMessage,
+        processing_time_ms: Date.now() - startTime,
+        error_message: errorMessage
+      })
+
       return NextResponse.json(
         {
-          error: 'Missing campaign identifier',
-          details: 'Please provide either "campaign_id" (your internal campaign ID) or "external_event_id" (your event/product ID) in the payload'
+          error: responseMessage,
+          limit: rateLimit.limit,
+          current: rateLimit.current,
+          reset_at: rateLimit.resetAt.toISOString()
         },
-        { status: 400, headers: corsHeaders }
+        {
+          status: responseStatus,
+          headers: {
+            ...corsHeaders,
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': Math.max(0, rateLimit.limit - rateLimit.current).toString(),
+            'X-RateLimit-Reset': Math.floor(rateLimit.resetAt.getTime() / 1000).toString()
+          }
+        }
       )
+    }
+
+    // Check for suspicious activity
+    const suspiciousCheck = await detectSuspiciousActivity(campaign.id)
+    if (suspiciousCheck.suspicious) {
+      console.warn(`Suspicious activity detected for campaign ${campaign.id}: ${suspiciousCheck.reason}`)
+      // Continue processing but log the warning
     }
 
     // Check if contact already exists for this campaign
     const { data: existingContact } = await supabaseAdmin
       .from('contacts')
-      .select('unique_code, short_link')
+      .select('id, unique_code, short_link')
       .eq('campaign_id', campaign.id)
       .eq('email', customer_email)
       .single()
 
     // If contact exists, return existing link
     if (existingContact) {
+      responseStatus = 200
+      responseMessage = 'Contact already exists, returned existing link'
+
+      // Log successful request
+      await logWebhookRequest({
+        campaign_id: campaign.id,
+        webhook_type: 'organization',
+        request_ip: clientIp,
+        request_headers: requestHeaders,
+        request_payload: body,
+        response_status: responseStatus,
+        response_message: responseMessage,
+        processing_time_ms: Date.now() - startTime
+      })
+
       return NextResponse.json(
         {
           success: true,
-          campaign_id: campaign.id,
-          campaign_name: campaign.name,
           referral_link: existingContact.short_link,
+          contact_id: existingContact.id,
           tracking_code: existingContact.unique_code,
-          message: 'Contact already exists, returned existing link'
+          message: responseMessage
         },
         { headers: corsHeaders }
       )
@@ -145,11 +267,15 @@ export async function POST(
       .from('contacts')
       .insert({
         campaign_id: campaign.id,
-        name: customer_name || 'Customer',
+        name: customer_name || 'Customer', // Backward compatibility
+        first_name: customer_first_name || null,
+        last_name: customer_last_name || null,
         email: customer_email,
+        phone: customer_phone || null,
         unique_code: uniqueCode,
         short_link: shortLink,
         order_id: order_id || null,
+        destination_url: ticket_url, // Store ticket URL from payload
         source: 'webhook_organization'
       })
       .select()
@@ -160,139 +286,138 @@ export async function POST(
       throw contactError
     }
 
-    // Send automated follow-up email with referral link
-    await sendReferralEmail({
-      recipientEmail: customer_email,
-      recipientName: customer_name,
-      campaignName: campaign.name,
-      eventDate: campaign.event_date,
-      referralLink: shortLink,
-      creativeImageUrl: campaign.creative_image_url,
+    // Handle referral if referral_code was provided
+    if (referral_code) {
+      console.log(`Processing referral for code: ${referral_code}`)
+
+      // Look up the referrer by their unique code
+      const { data: referrer, error: referrerError } = await supabaseAdmin
+        .from('contacts')
+        .select('id, campaign_id, email')
+        .eq('unique_code', referral_code)
+        .eq('campaign_id', campaign.id)
+        .single()
+
+      if (referrer && !referrerError) {
+        // Calculate commission amount
+        let commissionAmount = 0
+        if (campaign.commission_type === 'fixed') {
+          commissionAmount = campaign.commission_value
+        } else if (campaign.commission_type === 'percentage' && amount) {
+          commissionAmount = (amount * campaign.commission_value) / 100
+        }
+
+        // Create conversion record
+        const { data: conversion, error: conversionError } = await supabaseAdmin
+          .from('conversions')
+          .insert({
+            campaign_id: campaign.id,
+            referrer_contact_id: referrer.id,
+            referral_code: referral_code,
+            referred_customer_email: customer_email,
+            referred_customer_first_name: customer_first_name || null,
+            referred_customer_last_name: customer_last_name || null,
+            referred_customer_phone: customer_phone || null,
+            order_id: order_id || null,
+            amount: amount || null,
+            commission_type: campaign.commission_type,
+            commission_value: campaign.commission_value,
+            commission_amount: commissionAmount
+          })
+          .select()
+          .single()
+
+        if (conversion && !conversionError) {
+          // Determine credit status based on unlock type
+          let creditStatus = 'pending'
+          let unlockedAt = null
+
+          if (campaign.credit_unlock_type === 'immediate') {
+            creditStatus = 'available'
+            unlockedAt = new Date().toISOString()
+          }
+
+          // Create credit for the referrer
+          const { error: creditError } = await supabaseAdmin
+            .from('credits')
+            .insert({
+              contact_id: referrer.id,
+              campaign_id: campaign.id,
+              conversion_id: conversion.id,
+              amount: commissionAmount,
+              status: creditStatus,
+              unlocked_at: unlockedAt
+            })
+
+          if (creditError) {
+            console.error('Credit creation error:', creditError)
+          } else {
+            const statusMsg = creditStatus === 'available' ? 'unlocked' : 'pending unlock'
+            console.log(`Credit of $${commissionAmount.toFixed(2)} awarded to referrer ${referrer.email} (${statusMsg})`)
+          }
+        } else {
+          console.error('Conversion creation error:', conversionError)
+        }
+      } else {
+        console.warn(`Referral code ${referral_code} not found for campaign ${campaign.id}`)
+      }
+    }
+
+    responseStatus = 201
+    responseMessage = 'Referral link generated successfully'
+
+    // Log successful request
+    await logWebhookRequest({
+      campaign_id: campaign.id,
+      webhook_type: 'organization',
+      request_ip: clientIp,
+      request_headers: requestHeaders,
+      request_payload: body,
+      response_status: responseStatus,
+      response_message: responseMessage,
+      processing_time_ms: Date.now() - startTime
     })
 
     return NextResponse.json(
       {
         success: true,
-        campaign_id: campaign.id,
-        campaign_name: campaign.name,
         referral_link: shortLink,
+        contact_id: contact.id,
         tracking_code: uniqueCode,
-        message: 'Referral link generated and email sent'
+        message: responseMessage
       },
       { headers: corsHeaders }
     )
 
   } catch (error) {
     console.error('Organization webhook error:', error)
+    responseStatus = 500
+    responseMessage = 'Failed to process webhook'
+    errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    // Log failed request
+    if (campaignId) {
+      await logWebhookRequest({
+        campaign_id: campaignId,
+        webhook_type: 'organization',
+        request_ip: clientIp,
+        request_headers: requestHeaders,
+        request_payload: {},
+        response_status: responseStatus,
+        response_message: responseMessage,
+        processing_time_ms: Date.now() - startTime,
+        error_message: errorMessage
+      }).catch((logError) => {
+        console.error('Failed to log webhook error:', logError)
+      })
+    }
+
     return NextResponse.json(
       {
-        error: 'Failed to process webhook',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: responseMessage,
+        details: errorMessage
       },
-      { status: 500, headers: corsHeaders }
+      { status: responseStatus, headers: corsHeaders }
     )
-  }
-}
-
-// Send automated referral email to ticket buyer
-async function sendReferralEmail({
-  recipientEmail,
-  recipientName,
-  campaignName,
-  eventDate,
-  referralLink,
-  creativeImageUrl,
-}: {
-  recipientEmail: string
-  recipientName?: string
-  campaignName: string
-  eventDate: string
-  referralLink: string
-  creativeImageUrl?: string
-}) {
-  try {
-    const formattedDate = new Date(eventDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5;">
-  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-
-    ${creativeImageUrl ? `
-    <!-- Event Image -->
-    <div style="width: 100%; overflow: hidden;">
-      <img src="${creativeImageUrl}" alt="${campaignName}" style="width: 100%; height: auto; display: block;">
-    </div>
-    ` : ''}
-
-    <!-- Main Content -->
-    <div style="padding: 40px 30px;">
-      <h1 style="margin: 0 0 20px 0; font-size: 28px; font-weight: bold; color: #000000;">
-        Thanks for your purchase${recipientName ? `, ${recipientName}` : ''}!
-      </h1>
-
-      <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">
-        You're all set for <strong>${campaignName}</strong> on ${formattedDate}.
-      </p>
-
-      <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #333333;">
-        Want to share this event with friends? Use your personal referral link below:
-      </p>
-
-      <!-- Referral Link Box -->
-      <div style="background-color: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
-        <p style="margin: 0 0 15px 0; font-size: 14px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
-          Your Personal Referral Link
-        </p>
-        <a href="${referralLink}" style="display: inline-block; font-size: 16px; color: #000000; text-decoration: none; word-break: break-all; font-weight: 500;">
-          ${referralLink}
-        </a>
-      </div>
-
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${referralLink}" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; transition: background-color 0.3s;">
-          Share This Event →
-        </a>
-      </div>
-
-      <p style="margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; color: #666666;">
-        Share this link with your friends and help spread the word about this amazing event!
-      </p>
-    </div>
-
-    <!-- Footer -->
-    <div style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-      <p style="margin: 0; font-size: 12px; color: #999999;">
-        This email was sent because you purchased a ticket for ${campaignName}
-      </p>
-    </div>
-
-  </div>
-</body>
-</html>
-    `
-
-    await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'Referral Platform <onboarding@resend.dev>',
-      to: recipientEmail,
-      subject: `Share ${campaignName} with your friends!`,
-      html: emailHtml
-    })
-
-    console.log(`Referral email sent to ${recipientEmail}`)
-  } catch (error) {
-    console.error('Failed to send referral email:', error)
-    // Don't throw error - webhook should still succeed even if email fails
   }
 }

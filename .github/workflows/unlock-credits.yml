@@ -1,0 +1,18 @@
+name: Unlock Credits Daily
+
+on:
+  schedule:
+    # Runs at 2:00 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  unlock-credits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call unlock credits API
+        run: |
+          curl -X GET "https://platform-egbl.vercel.app/api/credits/unlock"
+
+      - name: Log completion
+        run: echo "Credits unlock job completed at $(date)"

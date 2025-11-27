@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/toast'
 
 interface InstagramShareButtonProps {
   creativeUrl?: string | null
@@ -17,10 +18,11 @@ export default function InstagramShareButton({
 }: InstagramShareButtonProps) {
   const [showInstructions, setShowInstructions] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const toast = useToast()
 
   const handleInstagramShare = async () => {
     if (!creativeUrl) {
-      alert('No creative image available for this campaign.')
+      toast.error('No creative image available for this campaign.')
       return
     }
 

@@ -4,6 +4,9 @@ interface Step3ReviewProps {
     eventDate: string
     eventEndDate: string
     ticketUrl: string
+    externalEventId?: string
+    commissionType: 'fixed' | 'percentage'
+    commissionValue: number
   }
 }
 
@@ -51,7 +54,38 @@ export default function Step3Review({ formData }: Step3ReviewProps) {
             <dt className="text-sm font-medium text-gray-600">Ticket URL:</dt>
             <dd className="text-sm text-gray-900 mt-1 break-all">{formData.ticketUrl || '-'}</dd>
           </div>
+          {formData.externalEventId && (
+            <div>
+              <dt className="text-sm font-medium text-gray-600">Event/Product ID:</dt>
+              <dd className="text-sm text-gray-900 mt-1 font-mono">{formData.externalEventId}</dd>
+            </div>
+          )}
         </dl>
+      </div>
+
+      {/* Commission Settings */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Commission Settings</h3>
+        <dl className="space-y-3">
+          <div>
+            <dt className="text-sm font-medium text-gray-600">Commission Type:</dt>
+            <dd className="text-sm text-gray-900 mt-1 capitalize">{formData.commissionType}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-600">Commission Value:</dt>
+            <dd className="text-sm text-gray-900 mt-1">
+              {formData.commissionType === 'fixed'
+                ? `$${formData.commissionValue.toFixed(2)} per sale`
+                : `${formData.commissionValue}% of ticket price`
+              }
+            </dd>
+          </div>
+        </dl>
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-blue-900">
+            Referrers earn {formData.commissionType === 'fixed' ? `$${formData.commissionValue.toFixed(2)}` : `${formData.commissionValue}%`} for each ticket sold through their link. Credits unlock after the event ends.
+          </p>
+        </div>
       </div>
 
       {/* Next Steps */}
@@ -60,23 +94,23 @@ export default function Step3Review({ formData }: Step3ReviewProps) {
         <ol className="space-y-2 text-sm text-blue-800">
           <li className="flex gap-2">
             <span className="font-bold">1.</span>
-            <span>Your event will be created and you'll get a webhook URL</span>
+            <span>Your event will be activated and ready to receive webhook notifications</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">2.</span>
-            <span>Configure your ticketing system to send purchase data to the webhook</span>
+            <span>Configure your ticketing platform to send purchase data to the webhook URL</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">3.</span>
-            <span>When tickets are sold, referral links will be automatically generated</span>
+            <span>When tickets are sold, personalized referral links are generated instantly</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">4.</span>
-            <span>Buyers will receive an email with their unique referral link</span>
+            <span>Share links with buyers via webhook response, CSV export, API, or email</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">5.</span>
-            <span>Track clicks, conversions, and revenue in your dashboard</span>
+            <span>Buyers share their links, earn credits, and redeem after the event</span>
           </li>
         </ol>
       </div>

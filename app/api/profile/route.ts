@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
         fullName: '',
         email: user.email,
         companyName: '',
+        clientId: '',
+        webhookDefaultCommissionType: 'fixed',
+        webhookDefaultCommissionValue: 3.00,
         logoUrl: '',
         brandColor: '#000000',
         industry: '',
@@ -43,9 +46,31 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
+    // Convert snake_case from DB to camelCase for frontend
     return NextResponse.json({
-      ...profile,
-      email: user.email, // Always return current email
+      fullName: profile.full_name || '',
+      email: user.email,
+      companyName: profile.company_name || '',
+      clientId: profile.client_id || '',
+      webhookDefaultCommissionType: profile.webhook_default_commission_type || 'fixed',
+      webhookDefaultCommissionValue: profile.webhook_default_commission_value || 3.00,
+      defaultCreditUnlockType: profile.default_credit_unlock_type || 'event_based',
+      defaultCreditUnlockDays: profile.default_credit_unlock_days || 0,
+      logoUrl: profile.logo_url || '',
+      brandColor: profile.brand_color || '#000000',
+      industry: profile.industry || '',
+      businessEmail: profile.business_email || '',
+      website: profile.website || '',
+      phone: profile.phone || '',
+      address: profile.address || '',
+      facebookUrl: profile.facebook_url || '',
+      instagramUrl: profile.instagram_url || '',
+      twitterUrl: profile.twitter_url || '',
+      linkedinUrl: profile.linkedin_url || '',
+      defaultFooter: profile.default_footer || '',
+      timezone: profile.timezone || 'America/New_York',
+      privacyPolicyUrl: profile.privacy_policy_url || '',
+      termsUrl: profile.terms_url || '',
     })
   } catch (error) {
     console.error('Profile fetch error:', error)
@@ -79,7 +104,7 @@ export async function PUT(request: NextRequest) {
 
     if (existing) {
       // Update existing profile
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('user_profiles')
         .update({
           full_name: body.fullName,
@@ -99,6 +124,10 @@ export async function PUT(request: NextRequest) {
           timezone: body.timezone,
           privacy_policy_url: body.privacyPolicyUrl,
           terms_url: body.termsUrl,
+          webhook_default_commission_type: body.webhookDefaultCommissionType,
+          webhook_default_commission_value: body.webhookDefaultCommissionValue,
+          default_credit_unlock_type: body.defaultCreditUnlockType,
+          default_credit_unlock_days: body.defaultCreditUnlockDays,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id)
@@ -130,6 +159,10 @@ export async function PUT(request: NextRequest) {
           timezone: body.timezone,
           privacy_policy_url: body.privacyPolicyUrl,
           terms_url: body.termsUrl,
+          webhook_default_commission_type: body.webhookDefaultCommissionType,
+          webhook_default_commission_value: body.webhookDefaultCommissionValue,
+          default_credit_unlock_type: body.defaultCreditUnlockType,
+          default_credit_unlock_days: body.defaultCreditUnlockDays,
         })
         .select()
         .single()
